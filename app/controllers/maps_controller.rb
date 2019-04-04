@@ -39,6 +39,19 @@ class MapsController < ApplicationController
   # POST /maps.json
   def create
     @map = Map.new(map_params)
+    
+    # API呼び出し、緯度経度を代入
+    require 'net/https'
+    require 'json'
+    require 'uri'
+
+    address = URI.encode(@map.address)
+    uri = URI.parse("https://maps.googleapis.com/maps/api/geocode/json?address=#{address}&key=AIzaSyAY1XPb1rDLqacdy_iDfrppVxWmwNdzZ0E")
+    http = Net::HTTP.new(uri.host, uri.port)
+    json = Net::HTTP.get(uri)
+    result = JSON.parse(json, {:symbolize_names => true})
+    @map.latitude = result[:results][0][:geometry][:location][:lat]
+    @map.longitude = result[:results][0][:geometry][:location][:lng]
 
     respond_to do |format|
       if @map.save
